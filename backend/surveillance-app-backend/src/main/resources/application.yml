@@ -1,0 +1,15 @@
+server:
+  port: 8081  # important ? Keycloak is on 8080, avoid conflict
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # This URL tells Spring Boot WHERE to find Keycloak's public keys
+          issuer-uri: http://localhost:8080/realms/surveillance-realm
+
+# Optional but useful for debugging
+logging:
+  level:
+    org.springframework.security: DEBUG
