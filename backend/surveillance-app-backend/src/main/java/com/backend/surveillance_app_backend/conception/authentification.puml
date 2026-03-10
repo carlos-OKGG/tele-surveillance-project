@@ -1,0 +1,163 @@
+@startuml auth-sequence-simple
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 13
+
+skinparam participant {
+  BackgroundColor #F0F4FF
+  BorderColor #4A6CF7
+  FontColor #1a1a2e
+  BorderThickness 2
+}
+
+skinparam actor {
+  BackgroundColor #FFF8E7
+  BorderColor #F0A500
+  FontColor #1a1a2e
+}
+
+skinparam database {
+  BackgroundColor #E8F5E9
+  BorderColor #4CAF50
+  FontColor #1a1a2e
+}
+
+skinparam sequence {
+  ArrowColor #4A6CF7
+  ArrowFontColor #555555
+  ArrowFontSize 12
+  ArrowThickness 2
+  LifeLineBorderColor #CCCCCC
+  LifeLineBackgroundColor #FAFAFA
+  DividerBackgroundColor #F0F4FF
+  DividerBorderColor #4A6CF7
+  DividerFontColor #4A6CF7
+  DividerFontSize 13
+  GroupBackgroundColor #FFFBE6
+  GroupBorderColor #F0A500
+  GroupFontColor #7a5900
+  NoteBackgroundColor #FFFDE7
+  NoteBorderColor #F0A500
+  NoteFontColor #555555
+  NoteFontSize 12
+}
+
+skinparam shadowing false
+
+title \n<size:18><b>Authentification — Application Surveillance Ferroviaire ACTIA</b></size>\n<size:13><color:#777777>Parcours complet d'un utilisateur · REF:HL-06</color></size>\n
+
+' ── PARTICIPANTS ──
+actor       "👤 Utilisateur"         as USER
+participant "🖥️  Angular\n(Navigateur)"     as ANG  #E3EAFF
+participant "🔐 Keycloak\n(Sécurité)"       as KC   #E3F2FF
+participant "🗄️  Spring Boot\n(Serveur API)" as SB   #E8F5E9
+database    "🐘 PostgreSQL\n(Base de données)" as DB  #F3E5F5
+
+' ══════════════════════════════════════════
+== 🚀  Étape 1 — Ouverture de l'application ==
+' ══════════════════════════════════════════
+
+USER -> ANG : Ouvre l'application\nsur son navigateur
+
+ANG -> KC : Vérifie silencieusement :\ny a-t-il déjà une session active ?
+
+alt Session existante → reconnexion automatique
+  KC --> ANG : ✅ Oui — session trouvée
+  ANG --> USER : Connecté automatiquement\nsans ressaisir le mot de passe
+else Pas de session
+  KC --> ANG : ❌ Non — aucune session
+  ANG --> USER : Affiche la page d'accueil\navec bouton "Se connecter"
+end
+
+' ══════════════════════════════════════════
+== 🔑  Étape 2 — Connexion ==
+' ══════════════════════════════════════════
+
+USER -> ANG : Clique sur\n"Se connecter"
+
+ANG -> KC : Redirige vers\nla page de login sécurisée
+
+note right of KC
+  L'utilisateur saisit
+  son identifiant et
+  son mot de passe
+  directement sur Keycloak.
+  Angular ne voit jamais
+  le mot de passe.
+end note
+
+USER -> KC : Saisit identifiant\net mot de passe
+
+alt ✅ Identifiants corrects
+  KC -> KC : Vérifie les\nidentifiants
+  KC --> ANG : Délivre un badge numérique\n(Token JWT — valable 5 min)
+  ANG --> USER : ✅ Connecté !\nAffiche le nom et le rôle
+else ❌ Identifiants incorrects
+  KC --> USER : ❌ Erreur\nIdentifiants invalides
+end
+
+' ══════════════════════════════════════════
+== 📊  Étape 3 — Accès au Dashboard ==
+' ══════════════════════════════════════════
+
+USER -> ANG : Navigue vers\nle Dashboard
+
+ANG -> ANG : Vérifie :\nl'utilisateur est-il connecté ?
+
+note right of ANG
+  Si non connecté →
+  redirigé vers login
+  automatiquement
+end note
+
+ANG -> SB : Demande les données des trains\n🎫 Badge numérique joint automatiquement
+
+SB -> SB : Vérifie le badge :\n• Signature valide ?\n• Pas expiré ?\n• Quel rôle ?
+
+SB -> DB : Récupère les données\nselon le rôle de l'utilisateur
+DB --> SB : Données trains, alertes,\nstatistiques...
+
+SB --> ANG : ✅ Données autorisées\nselon le profil
+
+ANG --> USER : Affiche le dashboard\npersonnalisé selon le rôle
+
+' ══════════════════════════════════════════
+== 🔄  Étape 4 — Renouvellement automatique ==
+' ══════════════════════════════════════════
+
+note over ANG, KC
+  ⏱️  Toutes les 5 minutes — Transparent pour l'utilisateur
+  Le badge numérique expire → le système en obtient un nouveau silencieusement
+end note
+
+ANG -> KC : Demande un nouveau badge\n(renouvellement automatique)
+
+alt ✅ Session encore valide (< 30 min)
+  KC --> ANG : ✅ Nouveau badge délivré\nL'utilisateur ne voit rien
+else ❌ Session expirée (> 30 min d'inactivité)
+  KC --> ANG : ❌ Session expirée
+  ANG --> USER : Veuillez vous reconnecter
+end
+
+' ══════════════════════════════════════════
+== 🚪  Étape 5 — Déconnexion ==
+' ══════════════════════════════════════════
+
+USER -> ANG : Clique sur\n"Se déconnecter"
+
+ANG -> KC : Demande la déconnexion
+
+KC -> KC : Invalide le badge\nImmédiatement côté serveur
+
+KC --> ANG : ✅ Déconnexion effectuée\nRedirection vers l'accueil
+
+ANG --> USER : Page d'accueil\nAccès aux données coupé
+
+note over USER, DB
+  🔒  Sécurité garantie : même si quelqu'un avait copié le badge,
+  il est immédiatement inutilisable après déconnexion.
+end note
+
+@enduml
