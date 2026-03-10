@@ -1,0 +1,39 @@
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+  <div class="card shadow-lg p-4" style="width: 440px;">
+
+    <!-- En-tête -->
+    <div class="text-center mb-4">
+      <i class="bi bi-shield-lock-fill text-success" style="font-size: 3.5rem;"></i>
+      <h2 class="fw-bold mt-2">Surveillance App</h2>
+      <p class="text-muted">Système de télé-surveillance et maintenance prédictive</p>
+    </div>
+
+    <!-- Utilisateur NON connecté -->
+    @if (!auth.isLoggedIn()) {
+      <p class="text-center text-muted mb-3">
+        Connectez-vous pour accéder au dashboard
+      </p>
+      <button class="btn btn-success w-100 py-2" (click)="auth.login()">
+        <i class="bi bi-box-arrow-in-right me-2"></i>
+        Se connecter
+      </button>
+    }
+
+    <!-- Utilisateur connecté -->
+    @if (auth.isLoggedIn()) {
+      <div class="alert alert-success d-flex align-items-center">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        Connecté : <strong class="ms-1">{{ auth.getUsername() }}</strong>
+      </div>
+      <a routerLink="/dashboard" class="btn btn-primary w-100 mb-2">
+        <i class="bi bi-speedometer2 me-2"></i>
+        Aller au Dashboard
+      </a>
+      <button class="btn btn-outline-danger w-100" (click)="auth.logout()">
+        <i class="bi bi-box-arrow-right me-2"></i>
+        Se déconnecter
+      </button>
+    }
+
+  </div>
+</div>

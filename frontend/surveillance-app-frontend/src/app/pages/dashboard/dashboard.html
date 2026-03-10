@@ -1,0 +1,94 @@
+<div class="container-fluid py-3">
+
+  <!-- Barre de navigation -->
+  <nav class="navbar navbar-dark bg-success rounded-3 px-4 mb-4 shadow-sm">
+    <span class="navbar-brand fw-bold fs-5">
+      <i class="bi bi-camera-video-fill me-2"></i>
+      Surveillance Dashboard
+    </span>
+    <div class="d-flex align-items-center gap-3">
+      <span class="text-white small">
+        <i class="bi bi-person-circle me-1"></i>
+        {{ auth.getUsername() }}
+      </span>
+      <button class="btn btn-outline-light btn-sm" (click)="auth.logout()">
+        <i class="bi bi-box-arrow-right me-1"></i>
+        Déconnexion
+      </button>
+    </div>
+  </nav>
+
+  <!-- Rôles de l'utilisateur -->
+  <div class="mb-3">
+    @if (auth.hasRole('ROLE_ADMIN')) {
+      <span class="badge bg-danger fs-6 me-2">
+        <i class="bi bi-shield-fill me-1"></i>ADMIN
+      </span>
+    }
+    @if (auth.hasRole('ROLE_TECHNICIAN')) {
+      <span class="badge bg-warning text-dark fs-6 me-2">
+        <i class="bi bi-tools me-1"></i>TECHNICIEN
+      </span>
+    }
+    @if (auth.hasRole('ROLE_VIEWER')) {
+      <span class="badge bg-info text-dark fs-6">
+        <i class="bi bi-eye-fill me-1"></i>VIEWER
+      </span>
+    }
+  </div>
+
+  <!-- Cartes d'information -->
+  <div class="row g-4">
+
+    <!-- Profil utilisateur -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title text-muted mb-3">
+            <i class="bi bi-person-badge me-2"></i>Profil
+          </h5>
+          <p><strong>Nom :</strong> {{ auth.getUsername() }}</p>
+          <p><strong>Email :</strong> {{ auth.getEmail() }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Réponse API Spring Boot -->
+    <div class="col-md-8">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title text-muted mb-3">
+            <i class="bi bi-server me-2"></i>Réponse Spring Boot API
+          </h5>
+
+          <!-- Chargement -->
+          @if (loading()) {
+            <div class="d-flex align-items-center gap-2 text-muted">
+              <div class="spinner-border spinner-border-sm text-success"></div>
+              Connexion à l'API...
+            </div>
+          }
+
+          <!-- Erreur -->
+          @if (apiError()) {
+            <div class="alert alert-danger">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              {{ apiError() }}
+            </div>
+          }
+
+          <!-- Succès -->
+          @if (apiResponse()) {
+            <div class="alert alert-success mb-2">
+              <i class="bi bi-check-circle me-2"></i>
+              API connectée avec succès !
+            </div>
+            <pre class="bg-light p-3 rounded small">{{ apiResponse() | json }}</pre>
+          }
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
